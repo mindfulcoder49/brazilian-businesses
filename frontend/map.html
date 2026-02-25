@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brazilian Businesses Map — Boston</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2d3048;
+      --accent: #00e676; --accent2: #ffca28; --warn: #ffa726;
+      --danger: #ef5350; --text: #e8eaf6; --muted: #7986cb;
+      --font-ui: "Inter", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", "Fira Code", monospace;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-ui);
+           font-size: 14px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    header { display: flex; align-items: center; gap: 12px; padding: 9px 16px;
+             background: var(--surface); border-bottom: 1px solid var(--border);
+             flex-shrink: 0; flex-wrap: wrap; }
+    header h1 { font-size: 16px; font-weight: 700; white-space: nowrap; }
+    .back-link { color: var(--accent2); text-decoration: none; font-size: 12px; white-space: nowrap; }
+    .back-link:hover { text-decoration: underline; }
+
+    /* ── Overlay panel ── */
+    #overlay {
+      position: absolute; top: 56px; left: 12px; z-index: 1000;
+      background: rgba(26,29,39,0.94); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px 16px; width: 270px;
+      backdrop-filter: blur(4px); display: flex; flex-direction: column; gap: 12px;
+    }
+
+    .overlay-section { display: flex; flex-direction: column; gap: 6px; }
+    .overlay-label { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                     letter-spacing: 0.07em; color: var(--muted); }
+
+    /* Threshold slider */
+    #threshold-row { display: flex; align-items: center; gap: 8px; }
+    #threshold-slider { flex: 1; accent-color: var(--accent); cursor: pointer; }
+    #threshold-value { font-family: var(--font-mono); font-size: 16px; font-weight: 700;
+                       color: var(--accent); min-width: 36px; text-align: right; }
+
+    .threshold-presets { display: flex; gap: 5px; flex-wrap: wrap; }
+    .preset-btn {
+      padding: 3px 9px; border: 1px solid var(--border); border-radius: 4px;
+      background: transparent; color: var(--muted); font-size: 11px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .preset-btn:hover, .preset-btn.active { background: var(--accent); color: #000;
+                                             border-color: var(--accent); font-weight: 700; }
+
+    /* Legend */
+    .legend-grid { display: grid; grid-template-columns: 12px 1fr; gap: 3px 8px; align-items: center; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .legend-label { font-size: 11px; color: var(--muted); }
+
+    /* Stats */
+    #stat-line { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 6px; }
+    .btn { padding: 6px 11px; border: none; border-radius: 5px; font-size: 12px;
+           font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn:not(:disabled):hover { opacity: 0.82; }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-secondary { background: #2d3048; color: var(--text); }
+    .btn-share { background: #1a2040; color: var(--accent2); border: 1px solid var(--border); }
+
+    /* Share toast */
+    #share-toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #1b3a2f; color: var(--accent); border: 1px solid var(--accent);
+      border-radius: 6px; padding: 8px 18px; font-size: 13px; font-weight: 600;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 9999;
+    }
+    #share-toast.visible { opacity: 1; }
+
+    #map { flex: 1; }
+
+    /* Leaflet popup dark theme */
+    .leaflet-popup-content-wrapper {
+      background: #1a1d27 !important; color: #e8eaf6 !important;
+      border: 1px solid #2d3048 !important; border-radius: 8px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+    }
+    .leaflet-popup-tip { background: #1a1d27 !important; }
+    .leaflet-popup-content { margin: 12px 14px !important; }
+
+    .pop-name   { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+    .pop-addr   { font-size: 11px; color: #90a4ae; margin-bottom: 8px; line-height: 1.4; }
+    .pop-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 6px; align-items: center; }
+    .pop-score  { font-family: var(--font-mono); font-weight: 700; font-size: 14px;
+                  border-radius: 4px; padding: 2px 8px; }
+    .pop-hit    { background: #1b3a2f; color: #00e676; border-radius: 3px;
+                  padding: 2px 6px; font-size: 11px; font-weight: 700; }
+    .pop-type   { background: #1a2040; color: #7986cb; border-radius: 3px;
+                  padding: 1px 5px; font-size: 10px; }
+    .pop-reason { font-size: 11px; color: #b0bec5; font-style: italic; margin-bottom: 6px; line-height: 1.4; }
+    .pop-queries { font-size: 10px; color: #546e7a; margin-bottom: 5px; }
+    .pop-query-pill { display: inline-block; background: #12141e; border: 1px solid #2d3048;
+                      border-radius: 3px; padding: 1px 4px; margin: 1px; }
+    .pop-gmaps  { color: #ffca28; font-size: 12px; text-decoration: none; display: block; margin-top: 5px; }
+    .pop-gmaps:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🇧🇷 Brazilian Businesses — Boston Metro</h1>
+  <a class="back-link" href="/">← Dashboard</a>
+  <span id="header-count" style="margin-left:auto; font-size:12px; color:var(--muted)">Loading…</span>
+</header>
+
+<div id="overlay">
+
+  <div class="overlay-section">
+    <div class="overlay-label">Score Threshold</div>
+    <div id="threshold-row">
+      <input type="range" id="threshold-slider" min="0" max="95" step="5" value="0" />
+      <span id="threshold-value">0</span>
+    </div>
+    <div class="threshold-presets">
+      <button class="preset-btn active" data-val="0">All</button>
+      <button class="preset-btn" data-val="50">50+</button>
+      <button class="preset-btn" data-val="75">75+</button>
+      <button class="preset-btn" data-val="90">90+</button>
+    </div>
+  </div>
+
+  <div class="overlay-section">
+    <div class="overlay-label">Score Legend</div>
+    <div class="legend-grid">
+      <div class="legend-dot" style="background:#00e676"></div><div class="legend-label">90–100 · Unmistakably Brazilian</div>
+      <div class="legend-dot" style="background:#76ff03"></div><div class="legend-label">75–89 · High confidence</div>
+      <div class="legend-dot" style="background:#ffca28"></div><div class="legend-label">50–74 · Moderate</div>
+      <div class="legend-dot" style="background:#ff7043"></div><div class="legend-label">20–49 · Weak indicators</div>
+      <div class="legend-dot" style="background:#ef5350"></div><div class="legend-label">1–19 · Probably not</div>
+      <div class="legend-dot" style="background:#546e7a"></div><div class="legend-label">Not scored yet</div>
+    </div>
+  </div>
+
+  <div class="overlay-section">
+    <div id="stat-line">—</div>
+  </div>
+
+  <div class="overlay-section">
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-score">Score Unscored</button>
+      <button class="btn btn-secondary" id="btn-reload">↻ Reload</button>
+    </div>
+    <div class="btn-row" style="margin-top:4px">
+      <button class="btn btn-share" id="btn-share" style="flex:1">🔗 Share this view</button>
+    </div>
+    <div id="score-status" style="font-size:11px; color:var(--muted); margin-top:4px;"></div>
+  </div>
+
+</div>
+
+<div id="map"></div>
+<div id="share-toast">Link copied to clipboard!</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+// ── Map init ────────────────────────────────────────────────────────────────
+const map = L.map('map', { center: [42.3601, -71.0589], zoom: 12 });
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  maxZoom: 19,
+}).addTo(map);
+
+const clusterGroup = L.markerClusterGroup({ maxClusterRadius: 50 });
+map.addLayer(clusterGroup);
+
+// ── Score → color ────────────────────────────────────────────────────────────
+function scoreColor(score) {
+  if (score === null || score === undefined) return '#546e7a';  // unscored
+  if (score >= 90) return '#00e676';
+  if (score >= 75) return '#76ff03';
+  if (score >= 50) return '#ffca28';
+  if (score >= 20) return '#ff7043';
+  return '#ef5350';
+}
+
+function markerSize(score) {
+  if (score === null || score === undefined) return 10;
+  if (score >= 90) return 16;
+  if (score >= 75) return 14;
+  if (score >= 50) return 12;
+  return 10;
+}
+
+function makeIcon(score) {
+  const color = scoreColor(score);
+  const size = markerSize(score);
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;
+           background:${color};border:2px solid rgba(255,255,255,0.55);
+           box-shadow:0 0 5px rgba(0,0,0,0.45)"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2],
+  });
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function scoreLabel(score) {
+  if (score === null || score === undefined) return '<span style="color:#546e7a">not scored</span>';
+  const color = scoreColor(score);
+  return `<span class="pop-score" style="background:${color}22;color:${color}">${score}</span>`;
+}
+
+// ── Render markers ────────────────────────────────────────────────────────────
+let allPlaces = [];
+
+function renderMarkers() {
+  clusterGroup.clearLayers();
+
+  allPlaces.forEach(p => {
+    if (!p.latitude || !p.longitude) return;
+
+    const queries = (p.query_sources || []).slice(0, 6)
+      .map(s => `<span class="pop-query-pill">${escHtml(s)}</span>`).join('');
+    const extra = p.query_sources && p.query_sources.length > 6
+      ? `<span class="pop-query-pill">+${p.query_sources.length - 6}</span>` : '';
+
+    const popup = `
+      <div class="pop-name">${escHtml(p.display_name || '(unknown)')}</div>
+      <div class="pop-addr">${escHtml(p.formatted_address || '')}</div>
+      <div class="pop-badges">
+        ${scoreLabel(p.brazil_score)}
+        <span class="pop-hit">${p.hit_count} hit${p.hit_count!==1?'s':''}</span>
+        ${p.primary_type ? `<span class="pop-type">${escHtml(p.primary_type)}</span>` : ''}
+      </div>
+      ${p.score_reason ? `<div class="pop-reason">"${escHtml(p.score_reason)}"</div>` : ''}
+      <div class="pop-queries">Matched by: ${queries}${extra}</div>
+      ${p.google_maps_uri
+        ? `<a class="pop-gmaps" href="${escHtml(p.google_maps_uri)}" target="_blank" rel="noreferrer">Open in Google Maps ↗</a>`
+        : ''}
+    `;
+
+    L.marker([p.latitude, p.longitude], { icon: makeIcon(p.brazil_score) })
+     .bindPopup(popup, { maxWidth: 300 })
+     .addTo(clusterGroup);
+  });
+
+  const threshold = getThreshold();
+  document.getElementById('header-count').textContent =
+    `${allPlaces.length} places${threshold > 0 ? ` (score ≥ ${threshold})` : ''}`;
+  document.getElementById('stat-line').textContent =
+    `${allPlaces.length} places shown`;
+}
+
+// ── Load data ────────────────────────────────────────────────────────────────
+async function loadPlaces() {
+  const threshold = getThreshold();
+  const url = `/api/candidates/map${threshold > 0 ? `?min_score=${threshold}` : ''}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  allPlaces = data.places || [];
+  renderMarkers();
+}
+
+// ── Threshold controls ────────────────────────────────────────────────────────
+function getThreshold() {
+  return parseInt(document.getElementById('threshold-slider').value, 10);
+}
+
+function setThreshold(val) {
+  val = Math.max(0, Math.min(95, parseInt(val, 10) || 0));
+  document.getElementById('threshold-slider').value = val;
+  document.getElementById('threshold-value').textContent = val;
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.val) === val);
+  });
+  updateHash(val);
+  loadPlaces();
+}
+
+document.getElementById('threshold-slider').addEventListener('input', e => {
+  const val = parseInt(e.target.value);
+  document.getElementById('threshold-value').textContent = val;
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.val) === val);
+  });
+});
+document.getElementById('threshold-slider').addEventListener('change', e => {
+  const val = parseInt(e.target.value);
+  updateHash(val);
+  loadPlaces();
+});
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => setThreshold(parseInt(btn.dataset.val)));
+});
+
+// ── URL hash for shareable views ──────────────────────────────────────────────
+function updateHash(threshold) {
+  if (threshold > 0) {
+    history.replaceState(null, '', `#min=${threshold}`);
+  } else {
+    history.replaceState(null, '', location.pathname);
+  }
+}
+
+function readHashThreshold() {
+  const m = location.hash.match(/[#&]min=(\d+)/);
+  return m ? parseInt(m[1]) : 0;
+}
+
+document.getElementById('btn-share').addEventListener('click', () => {
+  const url = location.href.split('#')[0] + (getThreshold() > 0 ? `#min=${getThreshold()}` : '');
+  navigator.clipboard.writeText(url).catch(() => {});
+  const toast = document.getElementById('share-toast');
+  toast.classList.add('visible');
+  setTimeout(() => toast.classList.remove('visible'), 2200);
+});
+
+// ── Scoring controls ──────────────────────────────────────────────────────────
+let scorePollInterval = null;
+
+async function checkScoreStatus() {
+  const res = await fetch('/api/score/status');
+  const data = await res.json();
+  const s = data.scores || {};
+  const prog = data.progress || {};
+  const statusEl = document.getElementById('score-status');
+
+  statusEl.textContent = `Scored: ${s.scored||0} / ${s.total||0} · High: ${s.high_confidence||0} · Pending: ${s.pending||0}`;
+
+  const btn = document.getElementById('btn-score');
+  if (data.running) {
+    btn.disabled = true;
+    btn.textContent = prog.total > 0
+      ? `⏳ ${prog.done}/${prog.total}`
+      : '⏳ Scoring…';
+    if (!scorePollInterval) {
+      scorePollInterval = setInterval(async () => {
+        await checkScoreStatus();
+        await loadPlaces();  // refresh map as scores come in
+      }, 4000);
+    }
+  } else {
+    if (scorePollInterval) { clearInterval(scorePollInterval); scorePollInterval = null; }
+    btn.disabled = s.pending === 0;
+    btn.textContent = s.pending > 0 ? `Score ${s.pending} Pending` : 'All Scored ✓';
+  }
+}
+
+document.getElementById('btn-score').addEventListener('click', async () => {
+  document.getElementById('btn-score').disabled = true;
+  document.getElementById('btn-score').textContent = 'Starting…';
+  await fetch('/api/score', { method: 'POST' });
+  await checkScoreStatus();
+});
+
+document.getElementById('btn-reload').addEventListener('click', async () => {
+  await loadPlaces();
+  await checkScoreStatus();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(async () => {
+  const hashThreshold = readHashThreshold();
+  if (hashThreshold > 0) {
+    document.getElementById('threshold-slider').value = hashThreshold;
+    document.getElementById('threshold-value').textContent = hashThreshold;
+    document.querySelectorAll('.preset-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.val) === hashThreshold);
+    });
+  }
+  await loadPlaces();
+  await checkScoreStatus();
+})();
+</script>
+</body>
+</html>

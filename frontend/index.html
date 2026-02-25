@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brazilian Business Finder — Boston</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <h1>🇧🇷 Brazilian Business Finder — Boston Metro</h1>
+    <div id="status-bar">
+      <span id="status-indicator" class="status-idle">● Idle</span>
+      <span id="stats-summary"></span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left panel: Controls + Log stream -->
+    <section class="panel" id="left-panel">
+
+      <div class="card" id="controls-card">
+        <h2>Phase 1 — Search <span class="tier-badge tier-free">IDs Only · FREE</span></h2>
+        <div class="button-row">
+          <button id="btn-start" class="btn btn-primary">▶ Start Run</button>
+          <button id="btn-stop" class="btn btn-danger" disabled>■ Stop</button>
+          <button id="btn-refresh" class="btn btn-secondary">↻ Refresh</button>
+        </div>
+        <div id="run-info" class="run-info hidden"></div>
+      </div>
+
+      <div class="card" id="enrich-card">
+        <h2>Phase 2 — Enrich <span class="tier-badge tier-pro">Pro Details · 5k free/mo</span></h2>
+        <p class="enrich-desc">Fetch Place Details for every unique candidate — name, address, type, coordinates.</p>
+        <div class="button-row">
+          <button id="btn-enrich" class="btn btn-primary">⬆ Enrich All Pending</button>
+        </div>
+        <div id="enrich-status" class="run-info">
+          <span id="stat-enriched">—</span> enriched &nbsp;/&nbsp; <span id="stat-pending">—</span> pending &nbsp;/&nbsp; <span id="stat-total-e">—</span> total
+        </div>
+      </div>
+
+      <div class="card" id="score-card">
+        <h2>Phase 3 — Score <span class="tier-badge tier-openai">OpenAI · batched ×10</span></h2>
+        <p class="enrich-desc">Rate each enriched place 0–100 for Brazilian likelihood. Conservative scoring — reduces false positives.</p>
+        <div class="button-row">
+          <button id="btn-score" class="btn btn-primary">⭐ Score All Pending</button>
+          <a href="/static/map.html" class="btn btn-secondary">🗺 View Map</a>
+        </div>
+        <div id="score-status" class="run-info">
+          <span id="stat-scored">—</span> scored &nbsp;·&nbsp;
+          <span id="stat-high">—</span> high (≥75) &nbsp;·&nbsp;
+          <span id="stat-score-pending">—</span> pending
+        </div>
+      </div>
+
+      <div class="card" id="stats-card">
+        <h2>Search Stats <span class="tier-note">(current run)</span></h2>
+        <div id="stats-grid" class="stats-grid">
+          <div class="stat-box"><div class="stat-value" id="stat-queries">—</div><div class="stat-label">Queries Run</div></div>
+          <div class="stat-box"><div class="stat-value" id="stat-results">—</div><div class="stat-label">IDs Returned</div></div>
+          <div class="stat-box"><div class="stat-value" id="stat-candidates">—</div><div class="stat-label">Unique IDs</div></div>
+          <div class="stat-box"><div class="stat-value" id="stat-dupes">—</div><div class="stat-label">Dupes Dropped</div></div>
+        </div>
+      </div>
+
+      <div class="card" id="log-card">
+        <div class="card-header">
+          <h2>Live Log</h2>
+          <label class="toggle-label">
+            <input type="checkbox" id="log-autoscroll" checked /> Auto-scroll
+          </label>
+          <select id="log-level-filter">
+            <option value="">All levels</option>
+            <option value="INFO">INFO</option>
+            <option value="WARN">WARN</option>
+            <option value="ERROR">ERROR</option>
+            <option value="DEBUG">DEBUG</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" id="btn-clear-log">Clear</button>
+        </div>
+        <div id="log-stream"></div>
+      </div>
+    </section>
+
+    <!-- Right panel: Candidates table -->
+    <section class="panel" id="right-panel">
+      <div class="card" id="candidates-card">
+        <div class="card-header">
+          <h2>Candidates <span id="candidate-count" class="badge">0</span></h2>
+          <input type="text" id="candidate-filter" placeholder="Filter by name or address…" />
+          <button class="btn btn-secondary btn-sm" id="btn-export">↓ Export CSV</button>
+        </div>
+        <div id="candidates-table-wrap">
+          <table id="candidates-table">
+            <thead>
+              <tr>
+                <th data-sort="display_name">Name ↕</th>
+                <th data-sort="formatted_address">Address ↕</th>
+                <th data-sort="primary_type">Type ↕</th>
+                <th data-sort="brazil_score">Score ↕</th>
+                <th data-sort="hit_count">Hits ↕</th>
+                <th>Sources</th>
+                <th>Map</th>
+              </tr>
+            </thead>
+            <tbody id="candidates-tbody"></tbody>
+          </table>
+          <div id="no-candidates" class="empty-state">No candidates yet. Start a run to begin searching.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

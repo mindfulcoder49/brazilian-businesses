@@ -1,0 +1,10 @@
+#standard ignore for python with .env
+*.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+
+.venv/
+
