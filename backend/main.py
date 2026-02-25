@@ -9,6 +9,10 @@ TWO-PHASE PIPELINE:
     POST /api/enrich  →  fetches Place Details for every unenriched candidate
 
 Endpoints:
+  GET    /                        - Map (public homepage)
+  GET    /admin                   - Admin dashboard
+  GET    /how-it-works            - How This Works explainer
+  GET    /health                  - Health check (for Fly.io)
   POST   /api/runs                - Start a new search agent run
   GET    /api/runs                - List all runs
   GET    /api/runs/{run_id}       - Get run status and stats
@@ -17,6 +21,7 @@ Endpoints:
   GET    /api/candidates          - All candidates (includes enrichment status)
   GET    /api/candidates/map      - Enriched candidates with lat/lng (for map)
   GET    /api/stats               - Global stats + enrichment counts
+  GET    /api/stats/overview      - Comprehensive stats for map sidebar
   GET    /api/queries/{run_id}    - Query-level log for a run
   GET    /api/logs/{run_id}       - Historical structured logs for a run
   WS     /ws/logs/{run_id}        - Live log stream
@@ -44,6 +49,22 @@ from places.client import PlacesClient
 # Registry of active run tasks so we can cancel them
 _active_runs: dict[str, asyncio.Task] = {}
 _stop_flags: dict[str, bool] = {}
+
+
+def _require_places_key():
+    if not settings.google_places_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Google Places API key not configured. Set GOOGLE_PLACES_API_KEY in environment.",
+        )
+
+
+def _require_openai_key():
+    if not settings.openai_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="OpenAI API key not configured. Set OPENAI_API_KEY in environment.",
+        )
 
 
 @asynccontextmanager
@@ -95,18 +116,12 @@ async def run_agent(run_id: str, config: dict):
         }
 
         try:
-            # Inject stop-flag check into the loop via a wrapper
-            # LangGraph doesn't have native cancellation, so we check the flag
-            # by wrapping via a custom invoke that polls between nodes.
-            # Simplest approach: use astream and check flag after each step.
             async for chunk in search_graph.astream(initial_state, {"recursion_limit": 10000}):
                 if _stop_flags.get(run_id):
                     await logger.warn("RUN_STOPPED_BY_USER", {})
-                    final_state = chunk.get(list(chunk.keys())[-1], {}) if chunk else {}
                     await storage.mark_run_stopped(run_id, "user_requested")
                     return
 
-            # Grab final state from last chunk
             final_stats = {
                 "total_queries": initial_state.get("total_queries_run", 0),
                 "total_results": initial_state.get("total_results_seen", 0),
@@ -138,6 +153,7 @@ async def run_agent(run_id: str, config: dict):
 @app.post("/api/runs")
 async def start_run(background_tasks: BackgroundTasks):
     """Start a new search agent run."""
+    _require_places_key()
     config = {
         "max_queries_per_run": settings.max_queries_per_run,
         "max_candidates": settings.max_candidates,
@@ -225,7 +241,18 @@ async def get_stats():
         "scores": score_counts,
         "active_enrichment": _enrichment_task is not None and not _enrichment_task.done(),
         "active_scoring": _scoring_task is not None and not _scoring_task.done(),
+        "keys": {
+            "places": bool(settings.google_places_api_key),
+            "openai": bool(settings.openai_api_key),
+        },
     }
+
+
+@app.get("/api/stats/overview")
+async def get_stats_overview():
+    """Comprehensive stats for the map sidebar."""
+    overview = await storage.get_stats_overview()
+    return overview
 
 
 # ---------------------------------------------------------------------------
@@ -275,6 +302,7 @@ async def start_enrichment():
     Start enriching all unenriched candidates with Place Details (Pro SKU).
     Safe to call multiple times — ignores if enrichment already running.
     """
+    _require_places_key()
     global _enrichment_task
     if _enrichment_task and not _enrichment_task.done():
         counts = await storage.get_enrichment_counts()
@@ -323,6 +351,7 @@ async def start_scoring():
     Start scoring all enriched-but-unscored candidates for Brazilian likelihood.
     Uses OpenAI in batches of 10. Safe to call multiple times.
     """
+    _require_openai_key()
     global _scoring_task
     if _scoring_task and not _scoring_task.done():
         counts = await storage.get_score_counts()
@@ -408,12 +437,37 @@ async def websocket_logs(websocket: WebSocket, run_id: str):
 
 
 # ---------------------------------------------------------------------------
+# Health check
+# ---------------------------------------------------------------------------
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "ok",
+        "keys": {
+            "places": bool(settings.google_places_api_key),
+            "openai": bool(settings.openai_api_key),
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
 # Serve frontend
 # ---------------------------------------------------------------------------
 
-app.mount("/static", StaticFiles(directory="../frontend"), name="static")
+app.mount("/static", StaticFiles(directory=settings.frontend_dir), name="static")
 
 
 @app.get("/")
-async def serve_frontend():
-    return FileResponse("../frontend/index.html")
+async def serve_map():
+    return FileResponse(f"{settings.frontend_dir}/map.html")
+
+
+@app.get("/admin")
+async def serve_admin():
+    return FileResponse(f"{settings.frontend_dir}/index.html")
+
+
+@app.get("/how-it-works")
+async def serve_how_it_works():
+    return FileResponse(f"{settings.frontend_dir}/how-it-works.html")

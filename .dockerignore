@@ -1,0 +1,20 @@
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/*.pyo
+backend/data/
+
+# Secrets
+backend/.env
+
+# Dev artifacts
+.claude/
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Git
+.git/
+.gitignore

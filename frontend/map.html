@@ -13,56 +13,100 @@
       --bg: #0f1117; --surface: #1a1d27; --border: #2d3048;
       --accent: #00e676; --accent2: #ffca28; --warn: #ffa726;
       --danger: #ef5350; --text: #e8eaf6; --muted: #7986cb;
+      --code-bg: #12141e;
       --font-ui: "Inter", system-ui, sans-serif;
       --font-mono: "JetBrains Mono", "Fira Code", monospace;
     }
     body { background: var(--bg); color: var(--text); font-family: var(--font-ui);
            font-size: 14px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    header { display: flex; align-items: center; gap: 12px; padding: 9px 16px;
-             background: var(--surface); border-bottom: 1px solid var(--border);
-             flex-shrink: 0; flex-wrap: wrap; }
+    /* ── Header ── */
+    header {
+      display: flex; align-items: center; gap: 12px; padding: 9px 16px;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      flex-shrink: 0; flex-wrap: wrap;
+    }
     header h1 { font-size: 16px; font-weight: 700; white-space: nowrap; }
-    .back-link { color: var(--accent2); text-decoration: none; font-size: 12px; white-space: nowrap; }
-    .back-link:hover { text-decoration: underline; }
+    .nav-link {
+      color: var(--accent2); text-decoration: none; font-size: 12px; white-space: nowrap;
+      padding: 3px 8px; border: 1px solid transparent; border-radius: 4px;
+      transition: border-color 0.15s;
+    }
+    .nav-link:hover { border-color: var(--border); }
+    #header-count { margin-left: auto; font-size: 12px; color: var(--muted); }
 
-    /* ── Overlay panel ── */
-    #overlay {
-      position: absolute; top: 56px; left: 12px; z-index: 1000;
-      background: rgba(26,29,39,0.94); border: 1px solid var(--border);
-      border-radius: 8px; padding: 14px 16px; width: 270px;
-      backdrop-filter: blur(4px); display: flex; flex-direction: column; gap: 12px;
+    /* ── Sidebar ── */
+    #sidebar {
+      position: absolute; top: 52px; left: 0; bottom: 0; z-index: 1000;
+      width: 300px; background: rgba(15,17,23,0.96); border-right: 1px solid var(--border);
+      backdrop-filter: blur(6px);
+      display: flex; flex-direction: column; gap: 0;
+      overflow-y: auto;
     }
 
-    .overlay-section { display: flex; flex-direction: column; gap: 6px; }
-    .overlay-label { font-size: 11px; font-weight: 700; text-transform: uppercase;
-                     letter-spacing: 0.07em; color: var(--muted); }
+    .sb-section {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .sb-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--muted);
+    }
 
     /* Threshold slider */
     #threshold-row { display: flex; align-items: center; gap: 8px; }
     #threshold-slider { flex: 1; accent-color: var(--accent); cursor: pointer; }
-    #threshold-value { font-family: var(--font-mono); font-size: 16px; font-weight: 700;
-                       color: var(--accent); min-width: 36px; text-align: right; }
-
+    #threshold-value {
+      font-family: var(--font-mono); font-size: 18px; font-weight: 700;
+      color: var(--accent); min-width: 36px; text-align: right;
+    }
     .threshold-presets { display: flex; gap: 5px; flex-wrap: wrap; }
     .preset-btn {
       padding: 3px 9px; border: 1px solid var(--border); border-radius: 4px;
       background: transparent; color: var(--muted); font-size: 11px; cursor: pointer;
       transition: all 0.15s;
     }
-    .preset-btn:hover, .preset-btn.active { background: var(--accent); color: #000;
-                                             border-color: var(--accent); font-weight: 700; }
+    .preset-btn:hover, .preset-btn.active {
+      background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700;
+    }
+
+    /* Score distribution bars */
+    .score-dist { display: flex; flex-direction: column; gap: 5px; }
+    .dist-row { display: grid; grid-template-columns: 80px 1fr 32px; gap: 6px; align-items: center; }
+    .dist-label { font-size: 10px; color: var(--muted); }
+    .dist-bar-wrap { height: 8px; background: #1a1d27; border-radius: 4px; overflow: hidden; }
+    .dist-bar { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+    .dist-count { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-align: right; }
+
+    /* Summary numbers */
+    .summary-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .sum-box {
+      background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px 10px; text-align: center;
+    }
+    .sum-val { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--accent); }
+    .sum-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; text-transform: uppercase; }
+
+    /* Top types */
+    .type-list { display: flex; flex-direction: column; gap: 4px; }
+    .type-row { display: flex; align-items: center; gap: 6px; }
+    .type-name {
+      font-size: 10px; color: var(--text); flex: 1;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .type-bar-wrap { width: 60px; height: 6px; background: #1a1d27; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+    .type-bar { height: 100%; background: var(--muted); border-radius: 3px; transition: width 0.4s; }
+    .type-count { font-family: var(--font-mono); font-size: 10px; color: var(--muted); min-width: 20px; text-align: right; }
 
     /* Legend */
-    .legend-grid { display: grid; grid-template-columns: 12px 1fr; gap: 3px 8px; align-items: center; }
-    .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
-    .legend-label { font-size: 11px; color: var(--muted); }
-
-    /* Stats */
-    #stat-line { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+    .legend-grid { display: grid; grid-template-columns: 10px 1fr; gap: 3px 7px; align-items: center; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .legend-label { font-size: 10px; color: var(--muted); }
 
     /* Buttons */
-    .btn-row { display: flex; gap: 6px; }
+    .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
     .btn { padding: 6px 11px; border: none; border-radius: 5px; font-size: 12px;
            font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -70,6 +114,8 @@
     .btn-primary { background: var(--accent); color: #000; }
     .btn-secondary { background: #2d3048; color: var(--text); }
     .btn-share { background: #1a2040; color: var(--accent2); border: 1px solid var(--border); }
+
+    #score-status { font-size: 10px; color: var(--muted); }
 
     /* Share toast */
     #share-toast {
@@ -80,12 +126,15 @@
     }
     #share-toast.visible { opacity: 1; }
 
-    #map { flex: 1; }
+    /* Map fills the rest */
+    #map-wrap { flex: 1; position: relative; }
+    #map { position: absolute; top: 0; left: 300px; right: 0; bottom: 0; }
 
     /* Leaflet popup dark theme */
     .leaflet-popup-content-wrapper {
       background: #1a1d27 !important; color: #e8eaf6 !important;
-      border: 1px solid #2d3048 !important; border-radius: 8px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+      border: 1px solid #2d3048 !important; border-radius: 8px !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
     }
     .leaflet-popup-tip { background: #1a1d27 !important; }
     .leaflet-popup-content { margin: 12px 14px !important; }
@@ -105,68 +154,132 @@
                       border-radius: 3px; padding: 1px 4px; margin: 1px; }
     .pop-gmaps  { color: #ffca28; font-size: 12px; text-decoration: none; display: block; margin-top: 5px; }
     .pop-gmaps:hover { text-decoration: underline; }
+
+    /* ── Cluster overrides — dark theme ── */
+    .marker-cluster-small,
+    .marker-cluster-medium,
+    .marker-cluster-large {
+      background-color: rgba(30, 40, 55, 0.6);
+    }
+    .marker-cluster-small div,
+    .marker-cluster-medium div,
+    .marker-cluster-large div {
+      background-color: rgba(20, 90, 70, 0.85);
+      color: #e0f2f1;
+      font-weight: 700;
+    }
+
+    /* Scrollbar */
+    #sidebar::-webkit-scrollbar { width: 4px; }
+    #sidebar::-webkit-scrollbar-track { background: transparent; }
+    #sidebar::-webkit-scrollbar-thumb { background: #2d3048; border-radius: 2px; }
   </style>
 </head>
 <body>
 
 <header>
   <h1>🇧🇷 Brazilian Businesses — Boston Metro</h1>
-  <a class="back-link" href="/">← Dashboard</a>
-  <span id="header-count" style="margin-left:auto; font-size:12px; color:var(--muted)">Loading…</span>
+  <a class="nav-link" href="/how-it-works">How This Works</a>
+  <a class="nav-link" href="/admin">Admin ↗</a>
+  <span id="header-count">Loading…</span>
 </header>
 
-<div id="overlay">
+<div id="map-wrap">
 
-  <div class="overlay-section">
-    <div class="overlay-label">Score Threshold</div>
-    <div id="threshold-row">
-      <input type="range" id="threshold-slider" min="0" max="95" step="5" value="0" />
-      <span id="threshold-value">0</span>
+  <!-- ── Sidebar ── -->
+  <div id="sidebar">
+
+    <!-- Score threshold -->
+    <div class="sb-section">
+      <div class="sb-label">Score Threshold</div>
+      <div id="threshold-row">
+        <input type="range" id="threshold-slider" min="0" max="95" step="5" value="75" />
+        <span id="threshold-value">75</span>
+      </div>
+      <div class="threshold-presets">
+        <button class="preset-btn" data-val="0">All</button>
+        <button class="preset-btn" data-val="50">50+</button>
+        <button class="preset-btn active" data-val="75">75+</button>
+        <button class="preset-btn" data-val="90">90+</button>
+      </div>
     </div>
-    <div class="threshold-presets">
-      <button class="preset-btn active" data-val="0">All</button>
-      <button class="preset-btn" data-val="50">50+</button>
-      <button class="preset-btn" data-val="75">75+</button>
-      <button class="preset-btn" data-val="90">90+</button>
+
+    <!-- Summary counts -->
+    <div class="sb-section">
+      <div class="sb-label">Coverage</div>
+      <div class="summary-grid">
+        <div class="sum-box"><div class="sum-val" id="sum-total">—</div><div class="sum-lbl">Found</div></div>
+        <div class="sum-box"><div class="sum-val" id="sum-enriched">—</div><div class="sum-lbl">Mapped</div></div>
+        <div class="sum-box"><div class="sum-val" id="sum-scored">—</div><div class="sum-lbl">Scored</div></div>
+        <div class="sum-box"><div class="sum-val" id="sum-high">—</div><div class="sum-lbl">High ≥75</div></div>
+      </div>
     </div>
+
+    <!-- Score distribution -->
+    <div class="sb-section">
+      <div class="sb-label">Score Distribution</div>
+      <div class="score-dist" id="score-dist">
+        <div class="dist-row"><span class="dist-label">90–100 · Sure</span><div class="dist-bar-wrap"><div class="dist-bar" id="bar-90" style="background:#00c853;width:0%"></div></div><span class="dist-count" id="cnt-90">—</span></div>
+        <div class="dist-row"><span class="dist-label">75–89 · High</span><div class="dist-bar-wrap"><div class="dist-bar" id="bar-75" style="background:#43a047;width:0%"></div></div><span class="dist-count" id="cnt-75">—</span></div>
+        <div class="dist-row"><span class="dist-label">50–74 · Moderate</span><div class="dist-bar-wrap"><div class="dist-bar" id="bar-50" style="background:#f57c00;width:0%"></div></div><span class="dist-count" id="cnt-50">—</span></div>
+        <div class="dist-row"><span class="dist-label">20–49 · Weak</span><div class="dist-bar-wrap"><div class="dist-bar" id="bar-20" style="background:#e53935;width:0%"></div></div><span class="dist-count" id="cnt-20">—</span></div>
+        <div class="dist-row"><span class="dist-label">1–19 · Unlikely</span><div class="dist-bar-wrap"><div class="dist-bar" id="bar-1" style="background:#880e4f;width:0%"></div></div><span class="dist-count" id="cnt-1">—</span></div>
+        <div class="dist-row"><span class="dist-label">Not scored</span><div class="dist-bar-wrap"><div class="dist-bar" id="bar-ns" style="background:#455a64;width:0%"></div></div><span class="dist-count" id="cnt-ns">—</span></div>
+      </div>
+    </div>
+
+    <!-- Top business types -->
+    <div class="sb-section">
+      <div class="sb-label">Top Business Types</div>
+      <div class="type-list" id="type-list">
+        <div style="font-size:11px;color:var(--muted)">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Search coverage -->
+    <div class="sb-section">
+      <div class="sb-label">Search Coverage</div>
+      <div class="summary-grid">
+        <div class="sum-box"><div class="sum-val" id="sum-queries">—</div><div class="sum-lbl">Queries</div></div>
+        <div class="sum-box"><div class="sum-val" id="sum-dupes">—</div><div class="sum-lbl">Dupes Dropped</div></div>
+      </div>
+    </div>
+
+    <!-- Score legend -->
+    <div class="sb-section">
+      <div class="sb-label">Legend</div>
+      <div class="legend-grid">
+        <div class="legend-dot" style="background:#00c853"></div><div class="legend-label">90–100 · Unmistakably Brazilian</div>
+        <div class="legend-dot" style="background:#43a047"></div><div class="legend-label">75–89 · High confidence</div>
+        <div class="legend-dot" style="background:#f57c00"></div><div class="legend-label">50–74 · Moderate</div>
+        <div class="legend-dot" style="background:#e53935"></div><div class="legend-label">20–49 · Weak indicators</div>
+        <div class="legend-dot" style="background:#880e4f"></div><div class="legend-label">1–19 · Probably not</div>
+        <div class="legend-dot" style="background:#455a64"></div><div class="legend-label">Not scored yet</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="sb-section">
+      <div class="sb-label">Actions</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-score">Score Unscored</button>
+        <button class="btn btn-secondary" id="btn-reload">↻ Reload</button>
+      </div>
+      <button class="btn btn-share" id="btn-share">🔗 Share this view</button>
+      <div id="score-status"></div>
+    </div>
+
   </div>
 
-  <div class="overlay-section">
-    <div class="overlay-label">Score Legend</div>
-    <div class="legend-grid">
-      <div class="legend-dot" style="background:#00e676"></div><div class="legend-label">90–100 · Unmistakably Brazilian</div>
-      <div class="legend-dot" style="background:#76ff03"></div><div class="legend-label">75–89 · High confidence</div>
-      <div class="legend-dot" style="background:#ffca28"></div><div class="legend-label">50–74 · Moderate</div>
-      <div class="legend-dot" style="background:#ff7043"></div><div class="legend-label">20–49 · Weak indicators</div>
-      <div class="legend-dot" style="background:#ef5350"></div><div class="legend-label">1–19 · Probably not</div>
-      <div class="legend-dot" style="background:#546e7a"></div><div class="legend-label">Not scored yet</div>
-    </div>
-  </div>
-
-  <div class="overlay-section">
-    <div id="stat-line">—</div>
-  </div>
-
-  <div class="overlay-section">
-    <div class="btn-row">
-      <button class="btn btn-primary" id="btn-score">Score Unscored</button>
-      <button class="btn btn-secondary" id="btn-reload">↻ Reload</button>
-    </div>
-    <div class="btn-row" style="margin-top:4px">
-      <button class="btn btn-share" id="btn-share" style="flex:1">🔗 Share this view</button>
-    </div>
-    <div id="score-status" style="font-size:11px; color:var(--muted); margin-top:4px;"></div>
-  </div>
-
+  <div id="map"></div>
 </div>
 
-<div id="map"></div>
 <div id="share-toast">Link copied to clipboard!</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
-// ── Map init ────────────────────────────────────────────────────────────────
+// ── Map init ──────────────────────────────────────────────────────────────────
 const map = L.map('map', { center: [42.3601, -71.0589], zoom: 12 });
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -177,14 +290,14 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const clusterGroup = L.markerClusterGroup({ maxClusterRadius: 50 });
 map.addLayer(clusterGroup);
 
-// ── Score → color ────────────────────────────────────────────────────────────
+// ── Score → color / size ──────────────────────────────────────────────────────
 function scoreColor(score) {
-  if (score === null || score === undefined) return '#546e7a';  // unscored
-  if (score >= 90) return '#00e676';
-  if (score >= 75) return '#76ff03';
-  if (score >= 50) return '#ffca28';
-  if (score >= 20) return '#ff7043';
-  return '#ef5350';
+  if (score === null || score === undefined) return '#455a64';
+  if (score >= 90) return '#00c853';
+  if (score >= 75) return '#43a047';
+  if (score >= 50) return '#f57c00';
+  if (score >= 20) return '#e53935';
+  return '#880e4f';
 }
 
 function markerSize(score) {
@@ -255,8 +368,6 @@ function renderMarkers() {
   const threshold = getThreshold();
   document.getElementById('header-count').textContent =
     `${allPlaces.length} places${threshold > 0 ? ` (score ≥ ${threshold})` : ''}`;
-  document.getElementById('stat-line').textContent =
-    `${allPlaces.length} places shown`;
 }
 
 // ── Load data ────────────────────────────────────────────────────────────────
@@ -267,6 +378,66 @@ async function loadPlaces() {
   const data = await res.json();
   allPlaces = data.places || [];
   renderMarkers();
+}
+
+// ── Load overview stats ───────────────────────────────────────────────────────
+async function loadOverview() {
+  try {
+    const res = await fetch('/api/stats/overview');
+    const data = await res.json();
+    const c = data.counts || {};
+    const qt = data.query_stats || {};
+
+    // Summary boxes
+    document.getElementById('sum-total').textContent = c.total_candidates || 0;
+    document.getElementById('sum-enriched').textContent = c.enriched || 0;
+    document.getElementById('sum-scored').textContent = c.scored || 0;
+    document.getElementById('sum-high').textContent = (c.score_90_plus||0) + (c.score_75_89||0);
+
+    // Score distribution bars
+    const enriched = c.enriched || 1;  // avoid div-by-zero
+    const bars = [
+      ['90', c.score_90_plus, '#00c853'],
+      ['75', c.score_75_89,   '#43a047'],
+      ['50', c.score_50_74,   '#f57c00'],
+      ['20', c.score_20_49,   '#e53935'],
+      ['1',  c.score_1_19,    '#880e4f'],
+      ['ns', c.unscored,      '#455a64'],
+    ];
+    bars.forEach(([key, val, color]) => {
+      const n = val || 0;
+      const pct = Math.round(n / enriched * 100);
+      const barEl = document.getElementById(`bar-${key}`);
+      const cntEl = document.getElementById(`cnt-${key}`);
+      if (barEl) { barEl.style.width = `${pct}%`; barEl.style.background = color; }
+      if (cntEl) cntEl.textContent = n;
+    });
+
+    // Top types
+    const typeList = document.getElementById('type-list');
+    const types = data.top_types || [];
+    if (types.length === 0) {
+      typeList.innerHTML = '<div style="font-size:11px;color:var(--muted)">No data yet</div>';
+    } else {
+      const maxCount = types[0].count || 1;
+      typeList.innerHTML = types.map(t => {
+        const pct = Math.round(t.count / maxCount * 100);
+        const label = t.type.replace(/_/g, ' ');
+        return `<div class="type-row">
+          <span class="type-name" title="${escHtml(t.type)}">${escHtml(label)}</span>
+          <div class="type-bar-wrap"><div class="type-bar" style="width:${pct}%"></div></div>
+          <span class="type-count">${t.count}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // Search coverage
+    document.getElementById('sum-queries').textContent = qt.total_queries_run || 0;
+    document.getElementById('sum-dupes').textContent = qt.duplicates_dropped || 0;
+
+  } catch (e) {
+    console.warn('Overview load failed', e);
+  }
 }
 
 // ── Threshold controls ────────────────────────────────────────────────────────
@@ -293,8 +464,7 @@ document.getElementById('threshold-slider').addEventListener('input', e => {
   });
 });
 document.getElementById('threshold-slider').addEventListener('change', e => {
-  const val = parseInt(e.target.value);
-  updateHash(val);
+  updateHash(parseInt(e.target.value));
   loadPlaces();
 });
 
@@ -313,11 +483,11 @@ function updateHash(threshold) {
 
 function readHashThreshold() {
   const m = location.hash.match(/[#&]min=(\d+)/);
-  return m ? parseInt(m[1]) : 0;
+  return m ? parseInt(m[1]) : null;  // null = no hash present (use default)
 }
 
 document.getElementById('btn-share').addEventListener('click', () => {
-  const url = location.href.split('#')[0] + (getThreshold() > 0 ? `#min=${getThreshold()}` : '');
+  const url = location.href.split('#')[0] + `#min=${getThreshold()}`;
   navigator.clipboard.writeText(url).catch(() => {});
   const toast = document.getElementById('share-toast');
   toast.classList.add('visible');
@@ -339,13 +509,12 @@ async function checkScoreStatus() {
   const btn = document.getElementById('btn-score');
   if (data.running) {
     btn.disabled = true;
-    btn.textContent = prog.total > 0
-      ? `⏳ ${prog.done}/${prog.total}`
-      : '⏳ Scoring…';
+    btn.textContent = prog.total > 0 ? `⏳ ${prog.done}/${prog.total}` : '⏳ Scoring…';
     if (!scorePollInterval) {
       scorePollInterval = setInterval(async () => {
         await checkScoreStatus();
-        await loadPlaces();  // refresh map as scores come in
+        await loadPlaces();
+        await loadOverview();
       }, 4000);
     }
   } else {
@@ -364,21 +533,22 @@ document.getElementById('btn-score').addEventListener('click', async () => {
 
 document.getElementById('btn-reload').addEventListener('click', async () => {
   await loadPlaces();
+  await loadOverview();
   await checkScoreStatus();
 });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 (async () => {
   const hashThreshold = readHashThreshold();
-  if (hashThreshold > 0) {
-    document.getElementById('threshold-slider').value = hashThreshold;
-    document.getElementById('threshold-value').textContent = hashThreshold;
-    document.querySelectorAll('.preset-btn').forEach(b => {
-      b.classList.toggle('active', parseInt(b.dataset.val) === hashThreshold);
-    });
-  }
-  await loadPlaces();
-  await checkScoreStatus();
+  const initialThreshold = hashThreshold !== null ? hashThreshold : 75;  // default 75
+
+  document.getElementById('threshold-slider').value = initialThreshold;
+  document.getElementById('threshold-value').textContent = initialThreshold;
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.val) === initialThreshold);
+  });
+
+  await Promise.all([loadPlaces(), loadOverview(), checkScoreStatus()]);
 })();
 </script>
 </body>

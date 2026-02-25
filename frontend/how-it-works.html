@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How This Works — Brazilian Business Finder</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --border: #2d3048;
+      --accent: #00e676; --accent2: #ffca28; --warn: #ffa726;
+      --danger: #ef5350; --text: #e8eaf6; --muted: #7986cb;
+      --code-bg: #12141e; --radius: 8px;
+      --font-ui: "Inter", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", "Fira Code", monospace;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-ui); font-size: 15px;
+      line-height: 1.65; min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    header h1 { font-size: 16px; font-weight: 700; }
+    .nav-link {
+      color: var(--accent2); text-decoration: none; font-size: 13px;
+      padding: 3px 8px; border: 1px solid transparent; border-radius: 4px;
+      transition: border-color 0.15s;
+    }
+    .nav-link:hover { border-color: var(--border); }
+    .nav-link.primary {
+      background: var(--accent); color: #000; font-weight: 600;
+      border-color: var(--accent);
+    }
+    .nav-link.primary:hover { opacity: 0.85; }
+
+    /* ── Content ── */
+    .content {
+      max-width: 800px; margin: 0 auto; padding: 40px 24px 80px;
+    }
+
+    h2 {
+      font-size: 22px; font-weight: 700; margin-bottom: 12px; margin-top: 40px;
+      color: var(--text); padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    }
+    h2:first-child { margin-top: 0; }
+    h3 {
+      font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 8px;
+      color: var(--accent2);
+    }
+    p { margin-bottom: 14px; color: #cdd2ee; }
+    ul, ol { padding-left: 20px; margin-bottom: 14px; }
+    li { margin-bottom: 6px; color: #cdd2ee; }
+    li::marker { color: var(--accent); }
+    strong { color: var(--text); font-weight: 600; }
+
+    /* Intro callout */
+    .intro {
+      background: #1b3a2f; border: 1px solid var(--accent); border-radius: var(--radius);
+      padding: 16px 20px; margin-bottom: 32px;
+    }
+    .intro p { color: #a5d6a7; margin: 0; }
+
+    /* Phase cards */
+    .phases { display: flex; flex-direction: column; gap: 16px; margin: 20px 0; }
+    .phase-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px;
+      display: grid; grid-template-columns: 48px 1fr; gap: 16px; align-items: start;
+    }
+    .phase-num {
+      width: 44px; height: 44px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 20px; font-weight: 800;
+      flex-shrink: 0;
+    }
+    .phase-num.free  { background: #1b3a2f; color: var(--accent); }
+    .phase-num.pro   { background: #2a2a00; color: var(--accent2); }
+    .phase-num.ai    { background: #1a1a3a; color: #b39ddb; }
+    .phase-num.map   { background: #1a2a3a; color: #80deea; }
+    .phase-body h3 { margin-top: 0; }
+    .badge {
+      display: inline-block; font-size: 10px; font-weight: 700; border-radius: 4px;
+      padding: 2px 7px; vertical-align: middle; margin-left: 6px; letter-spacing: 0.03em;
+    }
+    .badge-free   { background: #1b3a2f; color: var(--accent); }
+    .badge-pro    { background: #2a2a00; color: var(--accent2); }
+    .badge-openai { background: #1a1a3a; color: #b39ddb; }
+
+    /* Cost table */
+    .cost-table {
+      width: 100%; border-collapse: collapse; margin: 20px 0;
+      font-size: 13px;
+    }
+    .cost-table th {
+      background: var(--surface); color: var(--muted); font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 12px;
+      text-align: left; border-bottom: 1px solid var(--border);
+    }
+    .cost-table td {
+      padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: top;
+    }
+    .cost-table tr:last-child td { border-bottom: none; }
+    .cost-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .cost-tag {
+      display: inline-block; font-family: var(--font-mono); font-size: 12px;
+      font-weight: 700; color: var(--accent2); background: #2a2a00;
+      border-radius: 4px; padding: 2px 7px;
+    }
+    .tier-cell { color: var(--muted); font-size: 12px; }
+
+    /* Callout box */
+    .callout {
+      background: var(--code-bg); border-left: 3px solid var(--accent2);
+      border-radius: 0 var(--radius) var(--radius) 0; padding: 14px 18px;
+      margin: 20px 0;
+    }
+    .callout p { margin: 0; color: #cdd2ee; }
+    .callout p + p { margin-top: 8px; }
+
+    /* Limitations */
+    .limitations {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px;
+    }
+
+    /* Footer note */
+    .footer-note {
+      margin-top: 48px; padding: 16px 20px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      font-size: 12px; color: var(--muted); line-height: 1.6;
+    }
+    .footer-note a { color: var(--accent2); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🇧🇷 Brazilian Business Finder — Boston</h1>
+  <a class="nav-link primary" href="/">View Map</a>
+  <a class="nav-link" href="/admin">Admin</a>
+</header>
+
+<div class="content">
+
+  <div class="intro">
+    <p>This tool systematically searches Google Maps for Brazilian-owned and Brazilian-themed businesses across the Boston metro area, enriches each result with address and location data, and scores them by likelihood of being authentically Brazilian — producing a geocoded, filterable map for research and community advocacy.</p>
+  </div>
+
+  <h2>Why This Tool Exists</h2>
+  <p>Boston's Brazilian community — concentrated in neighborhoods like Allston, Framingham, Marlborough, and Brockton — represents one of the region's largest and most economically active immigrant groups. A comprehensive, up-to-date map of Brazilian-owned businesses is a foundational dataset for advocacy, economic development research, and community-facing services.</p>
+  <p>Compiling this data manually is time-consuming and prone to gaps. This tool automates the discovery process using Google's Places API and AI scoring, producing results that would take days of manual searching in a matter of hours.</p>
+
+  <h2>How the Pipeline Works</h2>
+
+  <div class="phases">
+
+    <div class="phase-card">
+      <div class="phase-num free">1</div>
+      <div class="phase-body">
+        <h3>Search — IDs Only <span class="badge badge-free">Unlimited · Free</span></h3>
+        <p>The tool sends over 350 carefully designed search queries to the Google Places API. These cover six families of terms: Brazilian food vocabulary (<em>churrascaria, pão de queijo, brigadeiro</em>), service types (<em>Brazilian wax, immigration lawyer, money transfer</em>), Portuguese-language phrases, brand name patterns (<em>Casa do Brasil, Sabor do Brasil</em>), priority terms crossed with 23 Boston neighborhoods, and catch-all geographic variations.</p>
+        <p>At this stage, the API returns only <strong>place IDs</strong> — anonymous Google identifiers with no address or name. This tier is completely free and unlimited. Every unique ID is stored; duplicates (the same restaurant appearing in dozens of search results) are collapsed and counted. A place appearing in 15 different queries is a much stronger signal than one appearing in one.</p>
+        <p>An AI agent (using OpenAI's GPT-4o-mini) also generates new search queries every 25 searches, expanding coverage based on what's been found so far.</p>
+      </div>
+    </div>
+
+    <div class="phase-card">
+      <div class="phase-num pro">2</div>
+      <div class="phase-body">
+        <h3>Enrich — Place Details <span class="badge badge-pro">5,000 free/month · Pro</span></h3>
+        <p>After deduplication, the tool fetches full details for each unique place — name, formatted address, business type, GPS coordinates, and a Google Maps link. This uses Google's Pro tier, which provides 5,000 free requests per month.</p>
+        <p>Because the same churrascaria may have appeared in 40 different search result pages but is only one unique place, enrichment calls are far fewer than raw search results. In a typical run finding ~1,100 unique candidates from ~350 queries × ~3 pages each ≈ 1,050 search pages, enrichment costs 1,100 Pro requests vs. the 1,050 that Pro-tier text search would have cost — but with far greater query diversity.</p>
+      </div>
+    </div>
+
+    <div class="phase-card">
+      <div class="phase-num ai">3</div>
+      <div class="phase-body">
+        <h3>Score — AI Likelihood Rating <span class="badge badge-openai">OpenAI · batched ×10</span></h3>
+        <p>Each enriched business is scored 0–100 for Brazilian likelihood by GPT-4o-mini. Businesses are batched 10 at a time into a single API request, with a carefully calibrated scoring rubric:</p>
+        <ul>
+          <li><strong>90–100:</strong> Unmistakably Brazilian — churrascaria, padaria brasileira, explicit "Brazilian" in name</li>
+          <li><strong>75–89:</strong> High confidence — specific food terms, Portuguese cultural words, community services</li>
+          <li><strong>50–74:</strong> Moderate — some evidence but ambiguous</li>
+          <li><strong>20–49:</strong> Weak indicators — generic names matched only by broad queries</li>
+          <li><strong>1–19:</strong> Probably not — Brazilian wax salons, açaí chains, generic results</li>
+          <li><strong>0:</strong> Clearly not Brazilian</li>
+        </ul>
+        <p>Scoring is intentionally conservative. False positives (including non-Brazilian businesses) are more harmful to the dataset's credibility than false negatives (missing some real businesses).</p>
+      </div>
+    </div>
+
+    <div class="phase-card">
+      <div class="phase-num map">4</div>
+      <div class="phase-body">
+        <h3>Map — Filterable Public View <span class="badge" style="background:#1a2a3a;color:#80deea">Free · OpenStreetMap</span></h3>
+        <p>All enriched businesses appear on an interactive map using OpenStreetMap tiles (free, no API key). Marker color and size encode the AI confidence score. The slider filters by minimum score threshold, and the current view can be shared via URL (e.g., <code style="font-family:var(--font-mono);font-size:12px;color:var(--accent)">/map#min=75</code> shows only high-confidence results).</p>
+        <p>Clicking any marker shows the business name, address, score, score reasoning, and a direct Google Maps link.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <h2>Expansion Roadmap</h2>
+  <p>The current dataset covers the Boston metro area with ~350 seed queries and up to 3,000 unique candidates. Here's how the tool can be expanded at three investment levels:</p>
+
+  <table class="cost-table">
+    <thead>
+      <tr>
+        <th>Budget</th>
+        <th>What It Buys</th>
+        <th>Expected Outcome</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="cost-tag">+$200</span></td>
+        <td>
+          <strong>Full enrichment of all candidates</strong><br />
+          <span class="tier-cell">~4,000 additional Place Details API calls at $17/1,000 = ~$68 · ~500 GPT-4o-mini scoring calls at $0.60/1M tokens ≈ $3 · ~$100 in expanded query coverage (500+ additional queries, more neighborhood granularity, secondary Portuguese search terms) · remainder to Google Maps Static API for business photos</span>
+        </td>
+        <td>Complete geocoded dataset of all candidates. Richer coverage of Marlborough, Brockton, Lowell, Lawrence corridors. Photo thumbnails in map popups.</td>
+      </tr>
+      <tr>
+        <td><span class="cost-tag">+$500</span></td>
+        <td>
+          <strong>Contact data + social validation</strong><br />
+          <span class="tier-cell">Google Places Enterprise tier ($25/1,000) for phone numbers, websites, and ratings on high-confidence candidates (~1,000 calls = $25) · Web scraping / social lookup pipeline to find Facebook pages, Instagram handles, and WhatsApp contacts (validates Brazilian identity) · Human review pass for 75+ scored businesses (~4 hours labor)</span>
+        </td>
+        <td>Actionable contact directory. Facebook/Instagram cross-validation reduces false positives. Exportable spreadsheet with phone, website, social handles for outreach campaigns.</td>
+      </tr>
+      <tr>
+        <td><span class="cost-tag">+$1,000</span></td>
+        <td>
+          <strong>Statewide coverage + sustained monitoring</strong><br />
+          <span class="tier-cell">Expand to all Massachusetts communities with Brazilian populations >500 (Worcester, Fall River, Milford, Somerville, Cambridge) · Monthly automated re-run to catch new openings and closings · Yelp and Apple Maps cross-reference to reduce dependence on single data source · Integration with Brazilian community organization directories for ground-truth validation</span>
+        </td>
+        <td>Living, continuously-updated map covering all of Massachusetts. Reliable enough for city planning reports, grant applications, and community resource directories. Monthly delta report (new businesses / closings).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <p><strong>Current free-tier capacity:</strong> Google Places gives 5,000 enrichment calls/month and unlimited search. OpenAI's cost for scoring 1,100 businesses in batches of 10 is under $1. The existing dataset was built at zero API cost using the free tiers.</p>
+    <p>All expansion costs above are conservative estimates based on February 2026 API pricing. Actual costs may be lower with volume discounts or if fewer candidates require enrichment after dedup.</p>
+  </div>
+
+  <h2>Limitations and Caveats</h2>
+
+  <div class="limitations">
+    <h3>What this tool can and cannot do</h3>
+    <ul>
+      <li><strong>Coverage, not completeness.</strong> The tool casts a wide net, but businesses without a Google Maps listing — informal vendors, home-based operations, very new businesses — will not appear.</li>
+      <li><strong>AI scoring is probabilistic.</strong> The 0–100 score is a language model's best estimate based on name, address, and matched search terms. It is not a verified certification of ownership. A score of 85 means "very likely Brazilian-themed" — not "confirmed Brazilian-owned."</li>
+      <li><strong>Brazilian wax salons inflate raw counts.</strong> The query family necessarily catches wax salons; these are filtered to scores of 1–15 by the scorer. Use a threshold of 50+ for community-service focused analysis.</li>
+      <li><strong>Static snapshot.</strong> The current dataset reflects businesses active at the time of the last run. Businesses open, close, and move. Re-running the pipeline periodically is necessary for ongoing accuracy.</li>
+      <li><strong>Geography is Google Maps' geography.</strong> Neighborhood boundaries and address coverage follow Google's data, which may differ from City of Boston Planning Department parcel-level definitions.</li>
+    </ul>
+  </div>
+
+  <h2>Data and Privacy</h2>
+  <p>All data displayed comes from Google's publicly available Places API — the same information visible to any user on Google Maps. No personally identifiable information about individuals is collected. Business listings are commercial entities with public-facing addresses and contact information.</p>
+  <p>The underlying dataset (SQLite database) can be exported as CSV from the <a href="/admin">Admin dashboard</a> for use in GIS tools, Excel, or planning reports.</p>
+
+  <div class="footer-note">
+    Built for the City of Boston Planning Department, Brazilian diaspora research. Pipeline: Google Places API (New) · LangGraph · OpenAI GPT-4o-mini · FastAPI · Leaflet / OpenStreetMap. Source code available on request.
+  </div>
+
+</div>
+</body>
+</html>

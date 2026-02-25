@@ -30,7 +30,14 @@ from log.run_logger import RunLogger
 # How often (in queries) to call OpenAI for query expansion
 EXPAND_EVERY = 25
 
-openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+_openai_client: AsyncOpenAI | None = None
+
+
+def _get_openai_client() -> AsyncOpenAI:
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+    return _openai_client
 
 
 # ---------------------------------------------------------------------------
@@ -265,7 +272,7 @@ Return ONLY a JSON array of strings, no explanation:
 ["query 1", "query 2", ...]"""
 
     try:
-        resp = await openai_client.chat.completions.create(
+        resp = await _get_openai_client().chat.completions.create(
             model=settings.openai_model,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,

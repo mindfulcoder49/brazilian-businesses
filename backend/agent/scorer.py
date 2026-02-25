@@ -23,7 +23,14 @@ from storage import db as storage
 
 BATCH_SIZE = settings.scoring_batch_size
 
-openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+_openai_client: AsyncOpenAI | None = None
+
+
+def _get_openai_client() -> AsyncOpenAI:
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+    return _openai_client
 
 # ---------------------------------------------------------------------------
 # Calibration prompt — this is the most important part of the scorer
@@ -166,7 +173,7 @@ async def _score_batch(candidates: list[dict]) -> list[dict]:
         f"PLACES:\n{json.dumps(formatted, indent=2)}"
     )
 
-    resp = await openai_client.chat.completions.create(
+    resp = await _get_openai_client().chat.completions.create(
         model=settings.scoring_model,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},

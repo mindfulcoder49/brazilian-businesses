@@ -367,6 +367,87 @@ async def get_score_counts() -> dict:
             }
 
 
+async def get_stats_overview() -> dict:
+    """
+    Comprehensive stats for the map sidebar.
+    Returns score distribution, top business types, coverage counts.
+    """
+    async with aiosqlite.connect(DB_PATH) as db:
+        # Score distribution
+        async with db.execute(
+            """SELECT
+               COUNT(*) as total,
+               SUM(CASE WHEN latitude IS NOT NULL THEN 1 ELSE 0 END) as enriched,
+               SUM(CASE WHEN brazil_score IS NOT NULL THEN 1 ELSE 0 END) as scored,
+               SUM(CASE WHEN brazil_score >= 90 THEN 1 ELSE 0 END) as s90,
+               SUM(CASE WHEN brazil_score >= 75 AND brazil_score < 90 THEN 1 ELSE 0 END) as s75,
+               SUM(CASE WHEN brazil_score >= 50 AND brazil_score < 75 THEN 1 ELSE 0 END) as s50,
+               SUM(CASE WHEN brazil_score >= 20 AND brazil_score < 50 THEN 1 ELSE 0 END) as s20,
+               SUM(CASE WHEN brazil_score > 0  AND brazil_score < 20 THEN 1 ELSE 0 END) as s1,
+               SUM(CASE WHEN brazil_score = 0 THEN 1 ELSE 0 END) as s0,
+               SUM(CASE WHEN brazil_score IS NULL AND latitude IS NOT NULL THEN 1 ELSE 0 END) as unscored,
+               SUM(hit_count) as total_hits,
+               MAX(hit_count) as max_hits
+               FROM candidates"""
+        ) as cur:
+            r = await cur.fetchone()
+            counts = {
+                "total_candidates": r[0] or 0,
+                "enriched": r[1] or 0,
+                "scored": r[2] or 0,
+                "score_90_plus": r[3] or 0,
+                "score_75_89": r[4] or 0,
+                "score_50_74": r[5] or 0,
+                "score_20_49": r[6] or 0,
+                "score_1_19": r[7] or 0,
+                "score_0": r[8] or 0,
+                "unscored": r[9] or 0,
+                "total_hits": r[10] or 0,
+                "max_hits": r[11] or 0,
+            }
+
+        # Top business types (among enriched)
+        async with db.execute(
+            """SELECT primary_type, COUNT(*) as n
+               FROM candidates
+               WHERE primary_type IS NOT NULL AND latitude IS NOT NULL
+               GROUP BY primary_type
+               ORDER BY n DESC
+               LIMIT 10"""
+        ) as cur:
+            top_types = [{"type": r[0], "count": r[1]} for r in await cur.fetchall()]
+
+        # Search query stats
+        async with db.execute(
+            """SELECT COUNT(*) as total_queries,
+                      SUM(results_total) as total_results,
+                      SUM(new_candidates) as total_new,
+                      SUM(duplicate_candidates) as total_dupes
+               FROM search_queries WHERE status='done'"""
+        ) as cur:
+            r = await cur.fetchone()
+            query_stats = {
+                "total_queries_run": r[0] or 0,
+                "total_results_returned": r[1] or 0,
+                "new_candidates_found": r[2] or 0,
+                "duplicates_dropped": r[3] or 0,
+            }
+
+        # Dedup ratio
+        total_q = query_stats["total_queries_run"]
+        total_r = query_stats["total_results_returned"]
+        enriched = counts["enriched"]
+        counts["dedup_ratio"] = (
+            round(1.0 - enriched / total_r, 3) if total_r > 0 else 0
+        )
+
+    return {
+        "counts": counts,
+        "top_types": top_types,
+        "query_stats": query_stats,
+    }
+
+
 async def get_candidate_count() -> int:
     async with aiosqlite.connect(DB_PATH) as db:
         async with db.execute("SELECT COUNT(*) FROM candidates") as cur:

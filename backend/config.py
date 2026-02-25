@@ -4,11 +4,12 @@ import os
 
 
 class Settings(BaseSettings):
-    google_places_api_key: str
-    openai_api_key: str
+    google_places_api_key: str | None = None
+    openai_api_key: str | None = None
 
     database_path: str = "data/candidates.db"
     log_path: str = "data/logs"
+    frontend_dir: str = "../frontend"
 
     # Agent loop controls
     max_queries_per_run: int = 300
