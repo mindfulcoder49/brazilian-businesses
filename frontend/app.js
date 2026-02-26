@@ -329,8 +329,10 @@ function renderCandidates() {
   countBadge.textContent = rows.length;
   noMsg.style.display = rows.length === 0 ? '' : 'none';
 
-  tbody.innerHTML = rows.map(c => {
+  const renderedRows = rows.map(c => {
     const hitClass = c.hit_count > 1 ? 'multi' : '';
+    const hitSources = JSON.stringify(c.query_sources || []).replace(/"/g, '&quot;');
+    const hitName   = escHtml(c.display_name || c.place_id).replace(/"/g, '&quot;');
     const sources = (c.query_sources || []).slice(0, 4).map(s =>
       `<span class="source-pill" title="${escHtml(s)}">${escHtml(s)}</span>`
     ).join('');
@@ -348,9 +350,9 @@ function renderCandidates() {
       : '<span style="font-size:9px; color:#546e7a; margin-left:4px;">(pending)</span>';
 
     const score = c.brazil_score;
-    const scoreColor = score === null || score === undefined ? '#546e7a'
-      : score >= 90 ? '#00e676' : score >= 75 ? '#76ff03'
-      : score >= 50 ? '#ffca28' : score >= 20 ? '#ff7043' : '#ef5350';
+    const scoreColor = score === null || score === undefined ? '#455a64'
+      : score >= 90 ? '#00c853' : score >= 75 ? '#43a047'
+      : score >= 50 ? '#f57c00' : score >= 20 ? '#e53935' : '#880e4f';
     const scoreBadge = score !== null && score !== undefined
       ? `<span title="${escHtml(c.score_reason||'')}" style="font-family:monospace;font-weight:700;font-size:13px;color:${scoreColor}">${score}</span>`
       : '<span style="color:#546e7a;font-size:11px">—</span>';
@@ -360,11 +362,22 @@ function renderCandidates() {
       <td>${escHtml(c.formatted_address || '—')}</td>
       <td>${type}</td>
       <td>${scoreBadge}</td>
-      <td><span class="hit-badge ${hitClass}">${c.hit_count}</span></td>
+      <td><span class="hit-badge ${hitClass}" data-name="${hitName}" data-sources="${hitSources}">${c.hit_count}</span></td>
       <td><div class="sources-list">${sources}${c.query_sources && c.query_sources.length > 4 ? `<span class="source-pill">+${c.query_sources.length - 4}</span>` : ''}</div></td>
       <td>${mapLink}</td>
     </tr>`;
   }).join('');
+
+  tbody.innerHTML = renderedRows;
+
+  tbody.querySelectorAll('.hit-badge').forEach(badge => {
+    badge.addEventListener('click', () => {
+      console.log('[hit-badge] direct click fired', badge.dataset);
+      const name    = badge.dataset.name || '';
+      const sources = JSON.parse(badge.dataset.sources || '[]');
+      showSourcesModal(name, sources);
+    });
+  });
 }
 
 candidateFilter.addEventListener('input', renderCandidates);
@@ -383,6 +396,32 @@ document.querySelectorAll('#candidates-table th[data-sort]').forEach(th => {
     th.classList.add(`sorted-${sortDir}`);
     renderCandidates();
   });
+});
+
+// ── Hit badge → sources popup ─────────────────────────────────────────────────
+
+function showSourcesModal(name, sources) {
+  console.log('[hit-badge] showSourcesModal called, backdrop:', document.getElementById('sources-modal-backdrop'));
+  document.getElementById('sources-modal').innerHTML = `
+    <div class="sm-header">
+      <span class="sm-title">${name}</span>
+      <button class="sm-close" id="sm-close-btn">✕</button>
+    </div>
+    <div class="sm-body">
+      <div class="sm-count">${sources.length} matched quer${sources.length === 1 ? 'y' : 'ies'}</div>
+      ${sources.map(s => `<div class="sm-pill">${escHtml(s)}</div>`).join('')}
+    </div>
+  `;
+  document.getElementById('sm-close-btn').addEventListener('click', closeSourcesModal);
+  document.getElementById('sources-modal-backdrop').classList.add('open');
+}
+
+function closeSourcesModal() {
+  document.getElementById('sources-modal-backdrop').classList.remove('open');
+}
+
+document.getElementById('sources-modal-backdrop').addEventListener('click', e => {
+  if (e.target.id === 'sources-modal-backdrop') closeSourcesModal();
 });
 
 // ── CSV Export ────────────────────────────────────────────────────────────────

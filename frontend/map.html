@@ -173,21 +173,63 @@
     #sidebar::-webkit-scrollbar { width: 4px; }
     #sidebar::-webkit-scrollbar-track { background: transparent; }
     #sidebar::-webkit-scrollbar-thumb { background: #2d3048; border-radius: 2px; }
+
+    /* ── Sidebar toggle (mobile only) ── */
+    #sidebar-toggle {
+      display: none; background: none; border: none; color: var(--text);
+      font-size: 22px; cursor: pointer; padding: 2px 6px; line-height: 1;
+      flex-shrink: 0;
+    }
+    #sidebar-close {
+      display: none; align-self: flex-end; background: none; border: none;
+      color: var(--muted); font-size: 20px; cursor: pointer; padding: 4px 8px;
+      line-height: 1; margin: 4px 4px 0 0;
+    }
+    #sidebar-overlay {
+      display: none; position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,0.5);
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 680px) {
+      header h1 { font-size: 13px; }
+      .nav-link { font-size: 11px; padding: 3px 6px; }
+      #header-count { font-size: 11px; }
+
+      #sidebar-toggle { display: block; }
+      #sidebar-close  { display: block; }
+
+      #sidebar {
+        width: min(88vw, 320px);
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.6);
+        top: 0;         /* overlay from top of viewport */
+        z-index: 1001;
+      }
+      #sidebar.open { transform: translateX(0); }
+      #sidebar-overlay.open { display: block; }
+
+      #map { left: 0; }   /* map always full-width on mobile */
+    }
   </style>
 </head>
 <body>
 
 <header>
+  <button id="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
   <h1>🇧🇷 Brazilian Businesses — Boston Metro</h1>
   <a class="nav-link" href="/how-it-works">How This Works</a>
   <a class="nav-link" href="/admin">Admin ↗</a>
   <span id="header-count">Loading…</span>
 </header>
+<div id="sidebar-overlay"></div>
 
 <div id="map-wrap">
 
   <!-- ── Sidebar ── -->
   <div id="sidebar">
+    <button id="sidebar-close" aria-label="Close sidebar">✕</button>
 
     <!-- Score threshold -->
     <div class="sb-section">
@@ -361,7 +403,7 @@ function renderMarkers() {
     `;
 
     L.marker([p.latitude, p.longitude], { icon: makeIcon(p.brazil_score) })
-     .bindPopup(popup, { maxWidth: 300 })
+     .bindPopup(popup, { maxWidth: Math.min(300, window.innerWidth - 40) })
      .addTo(clusterGroup);
   });
 
@@ -536,6 +578,19 @@ document.getElementById('btn-reload').addEventListener('click', async () => {
   await loadOverview();
   await checkScoreStatus();
 });
+
+// ── Sidebar toggle (mobile) ───────────────────────────────────────────────────
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebar-overlay').classList.add('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+document.getElementById('sidebar-toggle').addEventListener('click', openSidebar);
+document.getElementById('sidebar-close').addEventListener('click', closeSidebar);
+document.getElementById('sidebar-overlay').addEventListener('click', closeSidebar);
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 (async () => {

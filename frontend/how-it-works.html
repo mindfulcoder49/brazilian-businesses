@@ -136,6 +136,30 @@
       font-size: 12px; color: var(--muted); line-height: 1.6;
     }
     .footer-note a { color: var(--accent2); }
+
+    /* Cost table scroll wrapper */
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 20px 0; }
+    .table-scroll .cost-table { margin: 0; min-width: 560px; }
+
+    /* ── Mobile ── */
+    @media (max-width: 640px) {
+      header { flex-wrap: wrap; gap: 8px; padding: 8px 14px; }
+      header h1 { font-size: 14px; flex: 1; min-width: 0;
+                  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+      .content { padding: 24px 16px 60px; }
+
+      h2 { font-size: 18px; margin-top: 28px; }
+      body { font-size: 14px; }
+
+      .phase-card { grid-template-columns: 40px 1fr; gap: 12px; padding: 12px 14px; }
+      .phase-num { width: 36px; height: 36px; font-size: 16px; }
+
+      .cost-table td, .cost-table th { padding: 8px 10px; }
+
+      .callout { padding: 12px 14px; }
+      .limitations { padding: 12px 14px; }
+    }
   </style>
 </head>
 <body>
@@ -210,6 +234,7 @@
   <h2>Expansion Roadmap</h2>
   <p>The current dataset covers the Boston metro area with ~350 seed queries and up to 3,000 unique candidates. Here's how the tool can be expanded at three investment levels:</p>
 
+  <div class="table-scroll">
   <table class="cost-table">
     <thead>
       <tr>
@@ -245,6 +270,7 @@
       </tr>
     </tbody>
   </table>
+  </div>
 
   <div class="callout">
     <p><strong>Current free-tier capacity:</strong> Google Places gives 5,000 enrichment calls/month and unlimited search. OpenAI's cost for scoring 1,100 businesses in batches of 10 is under $1. The existing dataset was built at zero API cost using the free tiers.</p>

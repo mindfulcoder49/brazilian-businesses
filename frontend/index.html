@@ -9,6 +9,10 @@
 <body>
   <header>
     <h1>🇧🇷 Brazilian Business Finder — Boston Metro</h1>
+    <nav class="header-nav">
+      <a class="nav-link" href="/">🗺 Map</a>
+      <a class="nav-link" href="/how-it-works">How It Works</a>
+    </nav>
     <div id="status-bar">
       <span id="status-indicator" class="status-idle">● Idle</span>
       <span id="stats-summary"></span>
@@ -111,6 +115,11 @@
       </div>
     </section>
   </main>
+
+  <!-- Sources popup modal -->
+  <div id="sources-modal-backdrop">
+    <div id="sources-modal"></div>
+  </div>
 
   <script src="/static/app.js"></script>
 </body>
